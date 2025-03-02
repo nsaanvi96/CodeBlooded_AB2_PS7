@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profile - BloodAid</title>
+    <link rel="stylesheet" href="styles/profile.css">
+    <link rel="stylesheet" href="styles/app.css">
+    <script src="scripts/sidebar.js" defer></script>
+    
+</head>
+<body>
+
+    <div id="sidebar-container"></div>
+
+
+    <main class="content">
+        <h1>My Profile</h1>
+        <form>
+            <label>Full Name</label>
+            <input type="text" placeholder="Enter full name">
+
+            <label>Blood Group</label>
+            <select>
+                <option>A+</option>
+                <option>B+</option>
+                <option>O+</option>
+                <option>AB+</option>
+                <option>AB-</option>
+                <option>A-</option>
+                <option>B-</option>
+                <option>O-</option>
+
+            </select>
+
+            <label>Location</label>
+            <input type="text" placeholder="Enter your city">
+
+            <label for=”phone”>Phone Number:</label>
+            <input type=”tel” id=”phone” name=”phone” pattern="[0-9]{10}" maxlength="10" required>
+
+            <button type="submit">Save Changes</button>
+        </form>
+    </main>
+
+</body>
+</html>
