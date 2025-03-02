@@ -1,30 +1,19 @@
-document.addEventListener("DOMContentLoaded", function() {
-    // Login
-    const loginForm = document.getElementById("loginForm");
+document.addEventListener('DOMContentLoaded', function () {
+    const loginForm = document.querySelector('.login form');
     if (loginForm) {
-        loginForm.addEventListener("submit", function(event) {
-            event.preventDefault();
-            alert("Login successful! Redirecting...");
-            window.location.href = "dashboard.html";
-        });
-    }
+        loginForm.addEventListener('submit', function (e) {
+            e.preventDefault(); 
+            const email = loginForm.querySelector('.input[type="email"]').value;
+            const password = loginForm.querySelector('.password[type="password"]').value;
 
-    // Signup
-    const signupForm = document.getElementById("signupForm");
-    if (signupForm) {
-        signupForm.addEventListener("submit", function(event) {
-            event.preventDefault();
-            alert("Signup successful! Redirecting...");
-            window.location.href = "index.html";
-        });
-    }
-
-    // Forgot Password
-    const forgotForm = document.getElementById("forgotForm");
-    if (forgotForm) {
-        forgotForm.addEventListener("submit", function(event) {
-            event.preventDefault();
-            alert("Password reset link sent to your email!");
+          
+            if (email && password) {
+                
+                window.location.href = 'app.html'; 
+            } else {
+                alert('Please enter email and password.');
+            }
         });
     }
 });
+

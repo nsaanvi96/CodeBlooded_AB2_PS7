@@ -1,3 +1,4 @@
+<!-- filepath: /d:/BloodDonation Webapp/profile.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -7,21 +8,21 @@
     <link rel="stylesheet" href="styles/profile.css">
     <link rel="stylesheet" href="styles/app.css">
     <script src="scripts/sidebar.js" defer></script>
-    
+    <script src="scripts/profile.js" defer></script> <!-- Link profile.js -->
 </head>
 <body>
-
     <div id="sidebar-container"></div>
-
-
     <main class="content">
         <h1>My Profile</h1>
-        <form>
+        <form id="profileForm">
+            <label>Email</label>
+            <input type="email" id="email" placeholder="Enter email" required>
+
             <label>Full Name</label>
-            <input type="text" placeholder="Enter full name">
+            <input type="text" id="full-name" placeholder="Enter full name">
 
             <label>Blood Group</label>
-            <select>
+            <select id="blood-group">
                 <option>A+</option>
                 <option>B+</option>
                 <option>O+</option>
@@ -30,18 +31,16 @@
                 <option>A-</option>
                 <option>B-</option>
                 <option>O-</option>
-
             </select>
 
             <label>Location</label>
-            <input type="text" placeholder="Enter your city">
+            <input type="text" id="location" placeholder="Enter your city">
 
-            <label for=”phone”>Phone Number:</label>
-            <input type=”tel” id=”phone” name=”phone” pattern="[0-9]{10}" maxlength="10" required>
+            <label for="phone">Phone Number:</label>
+            <input type="tel" id="phone" name="phone" pattern="[0-9]{10}" maxlength="10" required>
 
             <button type="submit">Save Changes</button>
         </form>
     </main>
-
 </body>
 </html>

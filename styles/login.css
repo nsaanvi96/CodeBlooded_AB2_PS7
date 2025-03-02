@@ -1,90 +1,171 @@
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap');
-
 * {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-    font-family: 'Poppins', sans-serif;
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: 'Poppins', sans-serif;
 }
-
-body {
-    display: flex;
-    justify-content: flex-end; /* Align the login box to one side */
-    align-items: center;
-    height: 100vh;
-    background-image: url('iamges/blood-background.jpeg') no-repeat center center/cover;
+.main-container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  
+  padding: 20px; 
+  background-color: #000000;
 }
-
+@media (max-width: 768px) {
+ .main-container {
+    flex-direction: column; 
+    
+  }}
 .container {
-    background: rgba(255, 255, 255, 0.9);
-    padding: 40px; /* Increase padding for a bigger box */
-    border-radius: 10px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    width: 100%;
-    max-width: 450px; /* Increase max-width for a bigger box */
-    margin-right: 20px; /* Add some margin to the right */
+  height: 100vh;
+  width: 100%;
+  padding: 20px;
+  padding-left: 17%;
+  display: flex;
+  align-items: center;
+  justify-content: left;
+  background-color: #000000;
+  column-gap: 30px;
 }
-
-.forms {
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
-}
-
 .form {
-    background: none; /* Remove background to avoid double border */
-    padding: 0; /* Remove padding to avoid double border */
-    border-radius: 10px;
-    box-shadow: none; /* Remove box-shadow to avoid double border */
+  position: absolute;
+  max-width: 430px;
+  width: 100%;
+  padding: 30px;
+  border-radius: 6px;
+  background: #FFF;
 }
-
-.form-content {
-    display: flex;
-    flex-direction: column;
-    gap: 15px;
+.form.signup {
+  opacity: 0;
+  pointer-events: none;
 }
-
-.header {
-    font-size: 1.5em;
-    margin-bottom: 10px;
+.forms.show-signup .form.signup {
+  opacity: 1;
+  pointer-events: auto;
 }
-
-.field {
-    display: flex;
-    flex-direction: column;
-    gap: 5px;
+.forms.show-signup .form.login {
+  opacity: 0;
+  pointer-events: none;
 }
-
-.input-field input {
-    padding: 10px;
-    font-size: 16px;
-    border: 1px solid #ccc;
-    border-radius: 5px;
+header {
+  font-size: 28px;
+  font-weight: 600;
+  color: #8b1212;
+  text-align: center;
 }
-
-.button-field button {
-    padding: 10px 20px;
-    font-size: 16px;
-    background: #ff4757;
-    color: white;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
+form {
+  margin-top: 30px;
 }
-
-.button-field button:hover {
-    background: #e03e4e;
+.form .field {
+  position: relative;
+  height: 50px;
+  width: 100%;
+  margin-top: 20px;
+  border-radius: 6px;
 }
-
+.field input,
+.field button {
+  height: 100%;
+  width: 100%;
+  border: none;
+  font-size: 16px;
+  font-weight: 400;
+  border-radius: 6px;
+}
+.field input {
+  outline: none;
+  padding: 0 15px;
+  border: 1px solid#CACACA;
+}
+.field input:focus {
+  border-bottom-width: 2px;
+}
+.eye-icon {
+  position: absolute;
+  top: 50%;
+  right: 10px;
+  transform: translateY(-50%);
+  font-size: 18px;
+  color: #8b8b8b;
+  cursor: pointer;
+  padding: 5px;
+}
+.field button {
+  color: #fff;
+  background-color: #630202;
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+.field button:hover {
+  background-color: #bb1c1c;
+}
 .form-link {
-    text-align: center;
+  text-align: center;
+  margin-top: 10px;
 }
-
+.form-link span,
 .form-link a {
-    color: #ff4757;
-    text-decoration: none;
+  font-size: 14px;
+  font-weight: 400;
+  color: #232836;
+}
+.form a {
+  color: #4d0000;
+  text-decoration: none;
+}
+.form-content a:hover {
+  text-decoration: underline;
 }
 
-.form-link a:hover {
-    text-decoration: underline;
+@media screen and (max-width: 400px) {
+  .form {
+    padding: 20px 10px;
+  }
+}
+
+
+.signup{
+  max-width: 400px;
+  margin: auto;
+  padding: 20px;
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+.signup .form-content {
+  text-align: center;
+}
+
+.signup .field {
+  margin-bottom: 15px;
+}
+
+.signup .button-field {
+  margin-top: 20px;
+}
+.image-container {
+  width: 100%;
+  height: 100%; 
+  overflow: hidden;
+  padding: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: right;
+}
+.image{
+  display: flex;
+  align-items: center;
+  justify-content: right;
+}
+.image-container img {
+  width: 650px;
+  height: 650px;
+  padding: 20px;
+  padding-left: 10%;
+  display: flex;
+  align-items: center;
+  justify-content: right;
 }

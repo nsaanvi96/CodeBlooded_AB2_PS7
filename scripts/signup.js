@@ -1,7 +1,8 @@
+// filepath: /d:/BloodDonation Webapp/scripts/signup.js
 document.addEventListener("DOMContentLoaded", function() {
     const signupForm = document.getElementById("signupForm");
 
-    signupForm.addEventListener("submit", function(event) {
+    signupForm.addEventListener("submit", async function(event) {
         event.preventDefault();
 
         const email = document.getElementById("email").value;
@@ -13,8 +14,25 @@ document.addEventListener("DOMContentLoaded", function() {
             return;
         }
 
-        // Simulate a successful signup
-        alert("Signup successful!");
-        window.location.href = "login.html";
+        try {
+            const response = await fetch('http://localhost:5000/signup', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ email, password })
+            });
+
+            const data = await response.json();
+            if (response.ok) {
+                alert(data.message);
+                window.location.href = "login.html";
+            } else {
+                alert(data.message);
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            alert('An error occurred. Please try again.');
+        }
     });
 });
