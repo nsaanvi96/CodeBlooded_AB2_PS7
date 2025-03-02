@@ -9,9 +9,9 @@ document.addEventListener("DOMContentLoaded", function() {
         if (location) {
             // Simulate a search for donors
             const donors = [
-                { name: "PCCOE Campus(Donor 1)", lat: 18.6517, lng: 73.7616 },
-                { name: "Kamla Cross, Pcmc(Donor 2)", lat: 18.6286080, lng: 73.8033664 },
-                { name: "Lokmanya Hospital, Chinchwad(Donor 3)", lat: 18.6373, lng: 73.7903 }
+                { name: "PCCOE Campus(Donor 1), Contact no: 980XXXXXXX", lat: 18.6517, lng: 73.7616 },
+                { name: "Kamla Cross, Pcmc(Donor 2)Contact no: 880XXXXXXX", lat: 18.6286080, lng: 73.8033664 },
+                { name: "Lokmanya Hospital, Chinchwad(Donor 3)Contact no: 9760XXXXXX", lat: 18.6373, lng: 73.7903 }
             ];
 
             resultsContainer.innerHTML = "";
