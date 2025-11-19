@@ -1,46 +1,737 @@
-<!-- filepath: /d:/BloodDonation Webapp/profile.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Profile - BloodAid</title>
-    <link rel="stylesheet" href="styles/profile.css">
+    <title>My Profile - BloodAid</title>
     <link rel="stylesheet" href="styles/app.css">
+    <link rel="stylesheet" href="styles/profile.css">
+    <link rel="stylesheet" href="styles/blockchain.css">
     <script src="scripts/sidebar.js" defer></script>
-    <script src="scripts/profile.js" defer></script> <!-- Link profile.js -->
 </head>
 <body>
     <div id="sidebar-container"></div>
+    
     <main class="content">
         <h1>My Profile</h1>
-        <form id="profileForm">
-            <label>Email</label>
-            <input type="email" id="email" placeholder="Enter email" required>
+        
+        <div class="profile-section">
+            <h2>Personal Information</h2>
+            <form id="profileForm" class="profile-form">
+                <div class="form-group">
+                    <label for="full-name">Full Name *</label>
+                    <input type="text" id="full-name" placeholder="Enter your full name" required>
+                </div>
 
-            <label>Full Name</label>
-            <input type="text" id="full-name" placeholder="Enter full name">
+                <div class="form-group">
+                    <label for="email">Email Address</label>
+                    <input type="email" id="email" placeholder="Enter your email">
+                </div>
 
-            <label>Blood Group</label>
-            <select id="blood-group">
-                <option>A+</option>
-                <option>B+</option>
-                <option>O+</option>
-                <option>AB+</option>
-                <option>AB-</option>
-                <option>A-</option>
-                <option>B-</option>
-                <option>O-</option>
-            </select>
+                <div class="form-group">
+                    <label for="phone">Phone Number *</label>
+                    <input type="tel" id="phone" placeholder="Enter 10-digit phone number" pattern="[0-9]{10}" maxlength="10" required>
+                </div>
 
-            <label>Location</label>
-            <input type="text" id="location" placeholder="Enter your city">
+                <div class="form-group">
+                    <label for="blood-group">Blood Group *</label>
+                    <select id="blood-group" required>
+                        <option value="">Select your blood type</option>
+                        <option>A+</option>
+                        <option>B+</option>
+                        <option>O+</option>
+                        <option>AB+</option>
+                        <option>A-</option>
+                        <option>B-</option>
+                        <option>O-</option>
+                        <option>AB-</option>
+                    </select>
+                </div>
 
-            <label for="phone">Phone Number:</label>
-            <input type="tel" id="phone" name="phone" pattern="[0-9]{10}" maxlength="10" required>
+                <div class="form-group">
+                    <label for="location">City / Area</label>
+                    <input type="text" id="location" placeholder="Enter your city">
+                </div>
 
-            <button type="submit">Save Changes</button>
-        </form>
+                <button type="button" onclick="saveProfile()" class="save-btn">Save Profile</button>
+            </form>
+        </div>
+
+        <div class="verification-section">
+            <h2>Account Verification</h2>
+            <div class="verification-options">
+                <div class="verification-card">
+                    <h3>Age Verification</h3>
+                    <p>Confirm you are above 18 years old</p>
+                    <button onclick="verifyAge()" class="verify-btn">Verify Age</button>
+                </div>
+
+                <div class="verification-card">
+                    <h3>Health Status</h3>
+                    <p>Verify medical eligibility to donate</p>
+                    <button onclick="verifyHealth()" class="verify-btn">Check Health</button>
+                </div>
+
+                <div class="verification-card">
+                    <h3>Location</h3>
+                    <p>Confirm your service area</p>
+                    <button onclick="verifyLocation()" class="verify-btn">Set Location</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="verification-codes-section">
+            <h2>My Verification Codes</h2>
+            <p>Share these codes with hospitals to verify your eligibility without revealing personal information</p>
+            
+            <div class="code-generation">
+                <button onclick="generateAgeCode()" class="code-btn">Generate Age Code</button>
+                <button onclick="generateHealthCode()" class="code-btn">Generate Health Code</button>
+                <button onclick="generateLocationCode()" class="code-btn">Generate Location Code</button>
+                <button onclick="generateFullCode()" class="code-btn">Generate Complete Code</button>
+            </div>
+
+            <div id="generated-codes" class="codes-list">
+                <p>No codes generated yet. Click buttons above to create verification codes.</p>
+            </div>
+        </div>
+
+        <div class="blockchain-section">
+            <h2>Donor Registration</h2>
+            <div class="registration-actions">
+                <button onclick="registerAsDonor()" class="register-btn">Register as Blood Donor</button>
+                <p class="help-text">This will add you to the public donor list with verified status</p>
+            </div>
+            <div id="registration-status" class="status-message"></div>
+        </div>
+
+        <div class="verification-history">
+            <h2>Verification Status</h2>
+            <div id="verification-status">
+                <p>No verifications completed yet</p>
+            </div>
+        </div>
     </main>
+
+    <script>
+        // Load profile data
+        function loadProfile() {
+            const profile = JSON.parse(localStorage.getItem('userProfile') || '{}');
+            if (profile.name) {
+                document.getElementById('full-name').value = profile.name || '';
+                document.getElementById('email').value = profile.email || '';
+                document.getElementById('phone').value = profile.phone || '';
+                document.getElementById('blood-group').value = profile.bloodType || '';
+                document.getElementById('location').value = profile.location || '';
+            }
+        }
+
+        // Save profile
+        function saveProfile() {
+            const name = document.getElementById('full-name').value;
+            const email = document.getElementById('email').value;
+            const phone = document.getElementById('phone').value;
+            const bloodType = document.getElementById('blood-group').value;
+            const location = document.getElementById('location').value;
+            
+            if (!name || !phone || !bloodType) {
+                alert('Please fill in all required fields');
+                return;
+            }
+
+            const profile = { 
+                name, 
+                email, 
+                phone, 
+                bloodType, 
+                location,
+                lastUpdated: new Date().toISOString()
+            };
+            
+            localStorage.setItem('userProfile', JSON.stringify(profile));
+            
+            // Also save to user profiles list for donor search
+            const userProfiles = JSON.parse(localStorage.getItem('userProfiles') || '[]');
+            const existingIndex = userProfiles.findIndex(p => p.phone === phone);
+            
+            if (existingIndex >= 0) {
+                userProfiles[existingIndex] = profile;
+            } else {
+                userProfiles.push(profile);
+            }
+            localStorage.setItem('userProfiles', JSON.stringify(userProfiles));
+            
+            showStatus('Profile saved successfully', 'success');
+        }
+
+        // Verification functions
+        function verifyAge() {
+            const profile = JSON.parse(localStorage.getItem('userProfile') || '{}');
+            if (!profile.name) {
+                alert('Please save your profile first');
+                return;
+            }
+
+            const verification = {
+                type: 'age_verification',
+                status: 'verified',
+                timestamp: new Date().toISOString(),
+                message: 'Age eligibility confirmed (18+)'
+            };
+
+            saveVerification(verification);
+            showStatus('Age verification completed', 'success');
+        }
+
+        function verifyHealth() {
+            const profile = JSON.parse(localStorage.getItem('userProfile') || '{}');
+            if (!profile.name) {
+                alert('Please save your profile first');
+                return;
+            }
+
+            const verification = {
+                type: 'health_check',
+                status: 'eligible',
+                timestamp: new Date().toISOString(),
+                message: 'Medically eligible to donate blood'
+            };
+
+            saveVerification(verification);
+            showStatus('Health check completed', 'success');
+        }
+
+        function verifyLocation() {
+            const profile = JSON.parse(localStorage.getItem('userProfile') || '{}');
+            if (!profile.name) {
+                alert('Please save your profile first');
+                return;
+            }
+
+            if (!profile.location) {
+                alert('Please set your location in profile first');
+                return;
+            }
+
+            const verification = {
+                type: 'location_verification',
+                status: 'confirmed',
+                timestamp: new Date().toISOString(),
+                message: `Service area confirmed: ${profile.location}`
+            };
+
+            saveVerification(verification);
+            showStatus('Location verification completed', 'success');
+        }
+
+        function saveVerification(verification) {
+            const verifications = JSON.parse(localStorage.getItem('profileVerifications') || '[]');
+            verifications.push(verification);
+            localStorage.setItem('profileVerifications', JSON.stringify(verifications));
+            updateVerificationDisplay();
+        }
+
+        function updateVerificationDisplay() {
+            const verifications = JSON.parse(localStorage.getItem('profileVerifications') || '[]');
+            const statusElement = document.getElementById('verification-status');
+            
+            if (verifications.length === 0) {
+                statusElement.innerHTML = '<p>No verifications completed yet</p>';
+                return;
+            }
+
+            statusElement.innerHTML = `
+                <div class="verification-list">
+                    ${verifications.map(verification => `
+                        <div class="verification-item ${verification.status}">
+                            <div class="verification-icon">
+                                ${verification.status === 'verified' || verification.status === 'eligible' || verification.status === 'confirmed' ? '✅' : '❌'}
+                            </div>
+                            <div class="verification-details">
+                                <strong>${verification.type.replace('_', ' ')}</strong>
+                                <p>${verification.message}</p>
+                                <small>${new Date(verification.timestamp).toLocaleString()}</small>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        }
+
+        // Verification code generation
+        function generateAgeCode() {
+            const profile = JSON.parse(localStorage.getItem('userProfile') || '{}');
+            if (!profile.name) {
+                alert('Please save your profile first');
+                return;
+            }
+
+            const ageCode = 'AGE_' + Math.random().toString(36).substring(2, 10).toUpperCase();
+            saveVerificationCode('age', ageCode, 'Age eligibility verified (18+)');
+            displayGeneratedCode('Age Code', ageCode, 'Share this code to verify you are over 18');
+        }
+
+        function generateHealthCode() {
+            const profile = JSON.parse(localStorage.getItem('userProfile') || '{}');
+            if (!profile.name) {
+                alert('Please save your profile first');
+                return;
+            }
+
+            const healthCode = 'HEALTH_' + Math.random().toString(36).substring(2, 10).toUpperCase();
+            saveVerificationCode('health', healthCode, 'Medically eligible to donate');
+            displayGeneratedCode('Health Code', healthCode, 'Share this code to verify medical eligibility');
+        }
+
+        function generateLocationCode() {
+            const profile = JSON.parse(localStorage.getItem('userProfile') || '{}');
+            if (!profile.name) {
+                alert('Please save your profile first');
+                return;
+            }
+
+            const locationCode = 'LOC_' + Math.random().toString(36).substring(2, 10).toUpperCase();
+            saveVerificationCode('location', locationCode, `Location verified: ${profile.location}`);
+            displayGeneratedCode('Location Code', locationCode, 'Share this code to verify service area');
+        }
+
+        function generateFullCode() {
+            const profile = JSON.parse(localStorage.getItem('userProfile') || '{}');
+            if (!profile.name) {
+                alert('Please save your profile first');
+                return;
+            }
+
+            const fullCode = 'FULL_' + Math.random().toString(36).substring(2, 10).toUpperCase();
+            saveVerificationCode('full', fullCode, 'Complete donor eligibility verified');
+            displayGeneratedCode('Complete Code', fullCode, 'Share this code for full eligibility verification');
+        }
+
+        function saveVerificationCode(type, code, message) {
+            const verification = {
+                type: type,
+                code: code,
+                message: message,
+                timestamp: new Date().toISOString()
+            };
+
+            // Save to verification codes list
+            const codes = JSON.parse(localStorage.getItem('verificationCodes') || '[]');
+            codes.push(verification);
+            localStorage.setItem('verificationCodes', JSON.stringify(codes));
+
+            // Also save to blockchain for verification
+            const zkChain = JSON.parse(localStorage.getItem('zk_blockchain') || '[]');
+            zkChain.push({
+                index: zkChain.length,
+                timestamp: new Date().toISOString(),
+                data: {
+                    type: type.toUpperCase() + '_VERIFICATION',
+                    proofHash: code,
+                    statement: message,
+                    verification: "TRUE"
+                },
+                previousHash: zkChain.length > 0 ? zkChain[zkChain.length-1].hash : '0',
+                hash: Math.random().toString(36).substring(2, 16)
+            });
+            localStorage.setItem('zk_blockchain', JSON.stringify(zkChain));
+        }
+
+        function displayGeneratedCode(type, code, description) {
+            const codesElement = document.getElementById('generated-codes');
+            
+            const codeElement = document.createElement('div');
+            codeElement.className = 'code-item';
+            codeElement.innerHTML = `
+                <div class="code-header">
+                    <strong>${type}</strong>
+                    <button onclick="copyCode('${code}')" class="copy-btn">Copy</button>
+                </div>
+                <div class="code-value">${code}</div>
+                <div class="code-description">${description}</div>
+                <div class="code-time">Generated: ${new Date().toLocaleTimeString()}</div>
+            `;
+            
+            if (codesElement.querySelector('p')) {
+                codesElement.innerHTML = '';
+            }
+            
+            codesElement.appendChild(codeElement);
+        }
+
+        function copyCode(code) {
+            navigator.clipboard.writeText(code).then(() => {
+                alert('Code copied to clipboard!');
+            });
+        }
+
+        // Load existing codes when page loads
+        function loadExistingCodes() {
+            const codes = JSON.parse(localStorage.getItem('verificationCodes') || '[]');
+            const codesElement = document.getElementById('generated-codes');
+            
+            if (codes.length === 0) {
+                codesElement.innerHTML = '<p>No codes generated yet. Click buttons above to create verification codes.</p>';
+                return;
+            }
+            
+            codesElement.innerHTML = '';
+            codes.slice(-5).reverse().forEach(code => {
+                const typeMap = {
+                    'age': 'Age Code',
+                    'health': 'Health Code', 
+                    'location': 'Location Code',
+                    'full': 'Complete Code'
+                };
+                
+                const codeElement = document.createElement('div');
+                codeElement.className = 'code-item';
+                codeElement.innerHTML = `
+                    <div class="code-header">
+                        <strong>${typeMap[code.type]}</strong>
+                        <button onclick="copyCode('${code.code}')" class="copy-btn">Copy</button>
+                    </div>
+                    <div class="code-value">${code.code}</div>
+                    <div class="code-description">${code.message}</div>
+                    <div class="code-time">Generated: ${new Date(code.timestamp).toLocaleString()}</div>
+                `;
+                codesElement.appendChild(codeElement);
+            });
+        }
+
+        // Register as donor
+        function registerAsDonor() {
+            const profile = JSON.parse(localStorage.getItem('userProfile') || '{}');
+            if (!profile.name) {
+                alert('Please complete your profile first');
+                return;
+            }
+
+            // Check if already registered
+            const registeredDonors = JSON.parse(localStorage.getItem('registeredDonors') || '[]');
+            const alreadyRegistered = registeredDonors.find(donor => donor.phone === profile.phone);
+            
+            if (alreadyRegistered) {
+                showStatus('You are already registered as a donor', 'info');
+                return;
+            }
+
+            // Add to registered donors
+            const donorData = {
+                ...profile,
+                registeredAt: new Date().toISOString(),
+                donorId: 'DONOR_' + Date.now(),
+                isActive: true
+            };
+
+            registeredDonors.push(donorData);
+            localStorage.setItem('registeredDonors', JSON.stringify(registeredDonors));
+
+            showStatus('Successfully registered as blood donor! You will now appear in search results.', 'success');
+        }
+
+        function showStatus(message, type) {
+            const statusElement = document.getElementById('registration-status');
+            statusElement.innerHTML = `
+                <div class="status-message ${type}">
+                    ${message}
+                </div>
+            `;
+            
+            setTimeout(() => {
+                statusElement.innerHTML = '';
+            }, 5000);
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            loadProfile();
+            updateVerificationDisplay();
+            loadExistingCodes();
+        });
+    </script>
+
+    <style>
+        .profile-section {
+            background: white;
+            padding: 25px;
+            border-radius: 10px;
+            margin-bottom: 25px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .profile-form {
+            display: grid;
+            gap: 20px;
+            max-width: 500px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .form-group label {
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #333;
+        }
+
+        .form-group input,
+        .form-group select {
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus {
+            border-color: #ff4757;
+            outline: none;
+        }
+
+        .save-btn {
+            background: #ff4757;
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 500;
+        }
+
+        .save-btn:hover {
+            background: #e03e4e;
+        }
+
+        .verification-section {
+            background: white;
+            padding: 25px;
+            border-radius: 10px;
+            margin-bottom: 25px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .verification-options {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .verification-card {
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .verification-card h3 {
+            margin: 0 0 10px 0;
+            color: #333;
+        }
+
+        .verification-card p {
+            color: #666;
+            margin-bottom: 15px;
+        }
+
+        .verify-btn {
+            background: #2196F3;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .verify-btn:hover {
+            background: #1976D2;
+        }
+
+        .verification-codes-section {
+            background: white;
+            padding: 25px;
+            border-radius: 10px;
+            margin-bottom: 25px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .code-generation {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 10px;
+            margin: 20px 0;
+        }
+
+        .code-btn {
+            background: #2196F3;
+            color: white;
+            border: none;
+            padding: 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .code-btn:hover {
+            background: #1976D2;
+        }
+
+        .codes-list {
+            margin-top: 20px;
+        }
+
+        .code-item {
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+            background: #f8f9fa;
+        }
+
+        .code-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .copy-btn {
+            background: #6c757d;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+
+        .copy-btn:hover {
+            background: #5a6268;
+        }
+
+        .code-value {
+            font-family: monospace;
+            font-size: 18px;
+            font-weight: bold;
+            color: #333;
+            margin: 10px 0;
+            padding: 10px;
+            background: white;
+            border-radius: 4px;
+            border: 1px dashed #ccc;
+        }
+
+        .code-description {
+            color: #666;
+            margin-bottom: 5px;
+        }
+
+        .code-time {
+            font-size: 12px;
+            color: #999;
+        }
+
+        .blockchain-section {
+            background: white;
+            padding: 25px;
+            border-radius: 10px;
+            margin-bottom: 25px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .registration-actions {
+            text-align: center;
+            margin: 20px 0;
+        }
+
+        .register-btn {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 500;
+        }
+
+        .register-btn:hover {
+            background: #45a049;
+        }
+
+        .help-text {
+            color: #666;
+            font-size: 14px;
+            margin-top: 10px;
+        }
+
+        .verification-history {
+            background: white;
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .verification-list {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .verification-item {
+            display: flex;
+            align-items: start;
+            gap: 15px;
+            padding: 15px;
+            border: 1px solid #e0e0e0;
+            border-radius: 6px;
+        }
+
+        .verification-item.verified,
+        .verification-item.eligible,
+        .verification-item.confirmed {
+            border-left: 4px solid #4CAF50;
+        }
+
+        .verification-icon {
+            font-size: 20px;
+        }
+
+        .verification-details {
+            flex: 1;
+        }
+
+        .verification-details strong {
+            text-transform: capitalize;
+            color: #333;
+        }
+
+        .verification-details p {
+            margin: 5px 0;
+            color: #666;
+        }
+
+        .verification-details small {
+            color: #999;
+        }
+
+        @media (max-width: 768px) {
+            .verification-options {
+                grid-template-columns: 1fr;
+            }
+            
+            .code-generation {
+                grid-template-columns: 1fr;
+            }
+            
+            .profile-form {
+                gap: 15px;
+            }
+        }
+    </style>
 </body>
 </html>

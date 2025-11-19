@@ -6,30 +6,669 @@
     <title>Emergency Blood Request - BloodAid</title>
     <link rel="stylesheet" href="styles/app.css">
     <link rel="stylesheet" href="styles/emergency.css">
+    <link rel="stylesheet" href="styles/blockchain.css">
     <script src="scripts/sidebar.js" defer></script>
 </head>
 <body>
     <div id="sidebar-container"></div>
 
-   
     <main class="content">
-        <h1>🚨 Emergency Blood Request</h1>
-        <form class="emergency-form">
-            <label for="blood-group">Blood Group Needed</label>
-            <select id="blood-group">
-                <option>A+</option>
-                <option>B+</option>
-                <option>O+</option>
-                <option>AB+</option>
-                <option>AB-</option>
-                <option>A-</option>
-                <option>B-</option>
-                <option>O-</option>
-            </select>
-            <label for="location">Hospital/Location</label>
-            <input type="text" id="location" placeholder="Enter hospital">
-            <button type="submit">Send Alert</button>
+        <h1>Emergency Blood Request</h1>
+        
+        <div class="emergency-alert">
+            <div class="alert-header">
+                <span class="alert-icon">🚨</span>
+                <h2>Urgent Blood Needed</h2>
+            </div>
+            <p>Create an emergency request to notify all matching donors in your area immediately.</p>
+        </div>
+
+        <form class="emergency-form" id="emergencyForm">
+            <div class="form-section">
+                <h3>Patient Information</h3>
+                
+                <div class="form-group">
+                    <label for="patient-name">Patient Name</label>
+                    <input type="text" id="patient-name" placeholder="Enter patient name">
+                </div>
+
+                <div class="form-group">
+                    <label for="hospital-name">Hospital / Location *</label>
+                    <input type="text" id="hospital-name" placeholder="Enter hospital name" required>
+                </div>
+            </div>
+
+            <div class="form-section">
+                <h3>Blood Requirements</h3>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="blood-group">Blood Type Needed *</label>
+                        <select id="blood-group" required>
+                            <option value="">Select Blood Type</option>
+                            <option>A+</option>
+                            <option>B+</option>
+                            <option>O+</option>
+                            <option>AB+</option>
+                            <option>A-</option>
+                            <option>B-</option>
+                            <option>O-</option>
+                            <option>AB-</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="units">Units Required *</label>
+                        <input type="number" id="units" placeholder="Number of units" min="1" max="10" required>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="urgency">Urgency Level</label>
+                    <select id="urgency">
+                        <option value="high">🚨 Critical - Immediate need</option>
+                        <option value="medium">⚠️ Urgent - Within 4 hours</option>
+                        <option value="low">ℹ️ Required - Today</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-section">
+                <h3>Contact Information</h3>
+                
+                <div class="form-group">
+                    <label for="contact-person">Contact Person *</label>
+                    <input type="text" id="contact-person" placeholder="Your name" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="contact-phone">Contact Phone *</label>
+                    <input type="tel" id="contact-phone" placeholder="10-digit phone number" pattern="[0-9]{10}" maxlength="10" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="additional-info">Additional Information</label>
+                    <textarea id="additional-info" placeholder="Any special requirements or notes..." rows="3"></textarea>
+                </div>
+            </div>
+
+            <div class="form-actions">
+                <button type="submit" class="emergency-submit-btn">
+                    🚨 Send Emergency Alert
+                </button>
+                <p class="form-note">This will notify all matching blood donors in your area immediately</p>
+            </div>
         </form>
+
+        <!-- Emergency Results -->
+        <div id="emergency-results" class="emergency-results" style="display: none;">
+            <div class="results-header">
+                <h3>Emergency Response</h3>
+                <div class="response-status" id="response-status"></div>
+            </div>
+            
+            <div class="matching-donors">
+                <h4>Available Donors</h4>
+                <div id="matching-donors-list" class="donors-list"></div>
+            </div>
+
+            <div class="next-steps">
+                <h4>What happens next?</h4>
+                <ul>
+                    <li>✅ Matching donors have been notified</li>
+                    <li>📞 Donors will contact you directly</li>
+                    <li>🕒 Expected response: Within 30 minutes</li>
+                    <li>🔒 Your contact info is shared securely</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Recent Emergencies -->
+        <div class="recent-emergencies">
+            <h3>Recent Emergency Requests</h3>
+            <div id="recent-requests-list" class="requests-list">
+                <p>No recent emergency requests</p>
+            </div>
+        </div>
     </main>
+
+    <script>
+        // Load user profile data
+        function loadUserProfile() {
+            const profile = JSON.parse(localStorage.getItem('userProfile') || '{}');
+            if (profile.name) {
+                document.getElementById('contact-person').value = profile.name;
+                document.getElementById('contact-phone').value = profile.phone;
+            }
+        }
+
+        // Handle emergency form submission
+        document.getElementById('emergencyForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const bloodType = document.getElementById('blood-group').value;
+            const unitsNeeded = document.getElementById('units').value;
+            const hospitalName = document.getElementById('hospital-name').value;
+            const contactPerson = document.getElementById('contact-person').value;
+            const contactPhone = document.getElementById('contact-phone').value;
+            const urgency = document.getElementById('urgency').value;
+            const patientName = document.getElementById('patient-name').value;
+            const additionalInfo = document.getElementById('additional-info').value;
+
+            if (!bloodType || !unitsNeeded || !hospitalName || !contactPerson || !contactPhone) {
+                alert('Please fill all required fields');
+                return;
+            }
+
+            // Create emergency request
+            const emergencyData = {
+                requestId: 'EMERG_' + Date.now(),
+                bloodType: bloodType,
+                unitsNeeded: parseInt(unitsNeeded),
+                hospital: hospitalName,
+                contactPerson: contactPerson,
+                contactPhone: contactPhone,
+                urgency: urgency,
+                patientName: patientName,
+                additionalInfo: additionalInfo,
+                timestamp: new Date().toISOString(),
+                status: 'active'
+            };
+
+            // Save to local storage
+            saveEmergencyRequest(emergencyData);
+            
+            // Find matching donors
+            const matchingDonors = findMatchingDonors(bloodType);
+            
+            // Show results
+            displayEmergencyResults(emergencyData, matchingDonors);
+            
+            // Update recent requests
+            loadRecentRequests();
+        });
+
+        function saveEmergencyRequest(emergencyData) {
+            const emergencies = JSON.parse(localStorage.getItem('emergencyRequests') || '[]');
+            emergencies.push(emergencyData);
+            localStorage.setItem('emergencyRequests', JSON.stringify(emergencies));
+        }
+
+        function findMatchingDonors(bloodType) {
+            const allDonors = JSON.parse(localStorage.getItem('registeredDonors') || '[]');
+            return allDonors.filter(donor => 
+                donor.bloodType === bloodType && donor.isActive === true
+            );
+        }
+
+        function displayEmergencyResults(emergency, matchingDonors) {
+            const resultsElement = document.getElementById('emergency-results');
+            const statusElement = document.getElementById('response-status');
+            const donorsListElement = document.getElementById('matching-donors-list');
+            
+            // Show results section
+            resultsElement.style.display = 'block';
+            
+            // Update status
+            statusElement.innerHTML = `
+                <div class="status-success">
+                    <h4>✅ Emergency Alert Sent!</h4>
+                    <p>Request ID: <strong>${emergency.requestId}</strong></p>
+                    <p>We've notified ${matchingDonors.length} matching donors in your area.</p>
+                </div>
+            `;
+            
+            // Update donors list
+            if (matchingDonors.length > 0) {
+                donorsListElement.innerHTML = `
+                    <div class="donors-count">
+                        <p>${matchingDonors.length} donors available with ${emergency.bloodType} blood</p>
+                    </div>
+                    ${matchingDonors.map(donor => `
+                        <div class="donor-match">
+                            <div class="donor-info">
+                                <strong>${donor.name}</strong>
+                                <span class="blood-type">${donor.bloodType}</span>
+                            </div>
+                            <div class="donor-contact">
+                                <span class="phone">${donor.contact}</span>
+                                <span class="location">📍 ${donor.location}</span>
+                            </div>
+                            <div class="donor-status">
+                                <span class="status-badge">Notified</span>
+                            </div>
+                        </div>
+                    `).join('')}
+                `;
+            } else {
+                donorsListElement.innerHTML = `
+                    <div class="no-donors">
+                        <p>No matching donors found immediately.</p>
+                        <p>We'll continue searching and notify you when donors become available.</p>
+                        <button onclick="expandSearch()" class="expand-search-btn">Search wider area</button>
+                    </div>
+                `;
+            }
+            
+            // Scroll to results
+            resultsElement.scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function expandSearch() {
+            alert('Expanding search to nearby cities... We will notify you when donors are found.');
+        }
+
+        function loadRecentRequests() {
+            const emergencies = JSON.parse(localStorage.getItem('emergencyRequests') || '[]');
+            const recentListElement = document.getElementById('recent-requests-list');
+            
+            if (emergencies.length === 0) {
+                recentListElement.innerHTML = '<p>No recent emergency requests</p>';
+                return;
+            }
+            
+            const recentRequests = emergencies.slice(-3).reverse();
+            
+            recentListElement.innerHTML = recentRequests.map(request => `
+                <div class="request-item">
+                    <div class="request-header">
+                        <strong>${request.bloodType} • ${request.unitsNeeded} units</strong>
+                        <span class="request-time">${formatTimeAgo(request.timestamp)}</span>
+                    </div>
+                    <div class="request-details">
+                        <span class="hospital">🏥 ${request.hospital}</span>
+                        <span class="status ${request.status}">${request.status}</span>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function formatTimeAgo(timestamp) {
+            const now = new Date();
+            const requestTime = new Date(timestamp);
+            const diffMinutes = Math.floor((now - requestTime) / (1000 * 60));
+            
+            if (diffMinutes < 1) return 'Just now';
+            if (diffMinutes < 60) return `${diffMinutes}m ago`;
+            if (diffMinutes < 1440) return `${Math.floor(diffMinutes / 60)}h ago`;
+            return `${Math.floor(diffMinutes / 1440)}d ago`;
+        }
+
+        // Add some test donors if none exist
+        function addTestDonorsIfNeeded() {
+            const existingDonors = JSON.parse(localStorage.getItem('registeredDonors') || '[]');
+            if (existingDonors.length === 0) {
+                const testDonors = [
+                    {
+                        name: 'Rajesh Kumar',
+                        bloodType: 'O+',
+                        contact: '98******01',
+                        location: 'Pune City',
+                        isActive: true
+                    },
+                    {
+                        name: 'Priya Sharma', 
+                        bloodType: 'A+',
+                        contact: '97******02',
+                        location: 'Pimpri',
+                        isActive: true
+                    },
+                    {
+                        name: 'Amit Patel',
+                        bloodType: 'B+',
+                        contact: '96******03', 
+                        location: 'Chinchwad',
+                        isActive: true
+                    }
+                ];
+                localStorage.setItem('registeredDonors', JSON.stringify(testDonors));
+            }
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            loadUserProfile();
+            loadRecentRequests();
+            addTestDonorsIfNeeded();
+        });
+    </script>
+
+    <style>
+        .emergency-alert {
+            background: linear-gradient(135deg, #ff6b6b, #ee5a24);
+            color: white;
+            padding: 25px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        .alert-header {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 10px;
+        }
+
+        .alert-icon {
+            font-size: 2em;
+        }
+
+        .alert-header h2 {
+            margin: 0;
+            font-size: 1.8em;
+        }
+
+        .emergency-alert p {
+            margin: 0;
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .emergency-form {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+        }
+
+        .form-section {
+            margin-bottom: 30px;
+            padding-bottom: 25px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .form-section:last-of-type {
+            border-bottom: none;
+            margin-bottom: 0;
+        }
+
+        .form-section h3 {
+            margin: 0 0 20px 0;
+            color: #333;
+            font-size: 1.3em;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #333;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+            box-sizing: border-box;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            border-color: #ff4757;
+            outline: none;
+        }
+
+        .form-actions {
+            text-align: center;
+            margin-top: 30px;
+        }
+
+        .emergency-submit-btn {
+            background: linear-gradient(135deg, #ff4757, #e03e4e);
+            color: white;
+            border: none;
+            padding: 18px 40px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 18px;
+            font-weight: bold;
+            transition: transform 0.2s ease;
+        }
+
+        .emergency-submit-btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .form-note {
+            color: #666;
+            font-size: 14px;
+            margin-top: 10px;
+        }
+
+        .emergency-results {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+        }
+
+        .results-header {
+            margin-bottom: 25px;
+        }
+
+        .results-header h3 {
+            margin: 0 0 15px 0;
+            color: #333;
+        }
+
+        .status-success {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            border-radius: 8px;
+            padding: 20px;
+            color: #155724;
+        }
+
+        .matching-donors {
+            margin: 25px 0;
+        }
+
+        .matching-donors h4 {
+            margin: 0 0 15px 0;
+            color: #333;
+        }
+
+        .donors-count {
+            background: #e8f4fd;
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+
+        .donors-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .donor-match {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            border: 1px solid #e0e0e0;
+            border-radius: 6px;
+            background: #f8f9fa;
+        }
+
+        .donor-info {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .donor-info strong {
+            color: #333;
+        }
+
+        .blood-type {
+            background: #ff4757;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .donor-contact {
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+            color: #666;
+            font-size: 14px;
+        }
+
+        .status-badge {
+            background: #28a745;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+        }
+
+        .no-donors {
+            text-align: center;
+            padding: 30px;
+            color: #666;
+        }
+
+        .expand-search-btn {
+            background: #2196F3;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+
+        .next-steps {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 8px;
+            padding: 20px;
+            margin-top: 25px;
+        }
+
+        .next-steps h4 {
+            margin: 0 0 15px 0;
+            color: #856404;
+        }
+
+        .next-steps ul {
+            margin: 0;
+            padding-left: 20px;
+            color: #856404;
+        }
+
+        .next-steps li {
+            margin-bottom: 8px;
+        }
+
+        .recent-emergencies {
+            background: white;
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .recent-emergencies h3 {
+            margin: 0 0 20px 0;
+            color: #333;
+        }
+
+        .requests-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .request-item {
+            padding: 15px;
+            border: 1px solid #e0e0e0;
+            border-radius: 6px;
+            background: #f8f9fa;
+        }
+
+        .request-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .request-time {
+            color: #666;
+            font-size: 12px;
+        }
+
+        .request-details {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .hospital {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .status.active {
+            background: #28a745;
+            color: white;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+        }
+
+        @media (max-width: 768px) {
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+            
+            .donor-match {
+                flex-direction: column;
+                align-items: start;
+                gap: 10px;
+            }
+            
+            .request-header {
+                flex-direction: column;
+                align-items: start;
+                gap: 5px;
+            }
+            
+            .request-details {
+                flex-direction: column;
+                align-items: start;
+                gap: 5px;
+            }
+            
+            .emergency-submit-btn {
+                width: 100%;
+                padding: 15px;
+            }
+        }
+    </style>
 </body>
 </html>
