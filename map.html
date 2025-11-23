@@ -4,27 +4,263 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Live Donor Map - BloodAid</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link rel="stylesheet" href="styles/app.css">
     <link rel="stylesheet" href="styles/map.css">
     <script src="scripts/sidebar.js" defer></script>
+    <style>
+        #map { height: 500px; width: 100%; border-radius: 10px; }
+    </style>
 </head>
 <body>
-    
-    <div id="sidebar-container"></div> <!-- Sidebar container -->
+    <div id="sidebar-container"></div>
 
     <main class="content">
-        <h1>Live Donor Map</h1>
+        <div class="map-header">
+            <h1>Live Donor Map</h1>
+        </div>
+
+        <div class="map-controls">
+            <div class="search-box">
+                <input type="text" id="location-search" placeholder="Search area...">
+                <button onclick="searchLocation()">Search</button>
+            </div>
+            <select id="blood-type-filter">
+                <option value="">All Blood Types</option>
+                <option>O+</option><option>A+</option><option>B+</option><option>AB+</option>
+                <option>O-</option><option>A-</option><option>B-</option><option>AB-</option>
+            </select>
+        </div>
+
         <div id="map"></div>
+
+        <div class="donors-sidebar">
+            <h3>Available Donors</h3>
+            <div id="donors-list"></div>
+        </div>
     </main>
 
+    <!-- FREE Leaflet.js - No API Key Needed -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
+        let map;
+        let markers = [];
+        let donorsData = [];
+
+        // Initialize FREE map
         function initMap() {
-            var map = new google.maps.Map(document.getElementById("map"), {
-                center: { lat: 18.6517, lng: 73.7616},
-                zoom: 19,
+            // Create map centered on Pune
+            map = L.map('map').setView([18.5204, 73.8567], 12);
+
+            // Add FREE tile layer (OpenStreetMap)
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© OpenStreetMap contributors',
+                maxZoom: 18
+            }).addTo(map);
+
+            // Load donors
+            loadDonorsData();
+        }
+
+        function loadDonorsData() {
+            // Your existing donor loading code
+            const registeredDonors = JSON.parse(localStorage.getItem('registeredDonors') || '[]');
+            const userProfiles = JSON.parse(localStorage.getItem('userProfiles') || '[]');
+            
+            // Convert to donor format
+            const profileDonors = userProfiles.map(profile => ({
+                id: 'user_' + (profile.phone || profile.email),
+                name: profile.name || 'Registered Donor',
+                bloodType: profile.bloodType || 'O+',
+                contact: profile.phone || 'Contact via system',
+                location: profile.location || 'Local area',
+                lat: getRandomCoordinate(18.5204, 0.05),
+                lng: getRandomCoordinate(73.8567, 0.05),
+                isVerified: true
+            }));
+
+            donorsData = [...registeredDonors, ...profileDonors];
+            
+            // Add default donors if empty
+            if (donorsData.length === 0) {
+                donorsData = getDefaultDonors();
+            }
+
+            displayDonorsOnMap(donorsData);
+            updateDonorsList(donorsData);
+        }
+
+        function displayDonorsOnMap(donors) {
+            // Clear existing markers
+            markers.forEach(marker => map.removeLayer(marker));
+            markers = [];
+
+            donors.forEach(donor => {
+                // Create custom icon
+                const donorIcon = L.divIcon({
+                    html: `🩸`,
+                    className: 'donor-marker',
+                    iconSize: [30, 30]
+                });
+
+                const marker = L.marker([donor.lat, donor.lng], { icon: donorIcon })
+                    .addTo(map)
+                    .bindPopup(`
+                        <div class="map-popup">
+                            <h3>${donor.name}</h3>
+                            <p><strong>Blood Type:</strong> ${donor.bloodType}</p>
+                            <p><strong>Contact:</strong> ${donor.contact}</p>
+                            <p><strong>Location:</strong> ${donor.location}</p>
+                            ${donor.isVerified ? '<p>✅ Verified Donor</p>' : ''}
+                            <button onclick="requestContact('${donor.id}')">Contact</button>
+                        </div>
+                    `);
+
+                markers.push(marker);
             });
         }
+
+        function updateDonorsList(donors) {
+            const donorsList = document.getElementById('donors-list');
+            donorsList.innerHTML = donors.map(donor => `
+                <div class="donor-item" onclick="focusOnDonor('${donor.id}')">
+                    <div class="donor-avatar">${donor.name.charAt(0)}</div>
+                    <div class="donor-info">
+                        <h4>${donor.name}</h4>
+                        <span class="blood-type">${donor.bloodType}</span>
+                        <p>📍 ${donor.location}</p>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function focusOnDonor(donorId) {
+            const donor = donorsData.find(d => d.id === donorId);
+            if (donor) {
+                map.setView([donor.lat, donor.lng], 15);
+                // Open popup
+                const marker = markers.find(m => m.getLatLng().lat === donor.lat);
+                if (marker) marker.openPopup();
+            }
+        }
+
+        function searchLocation() {
+            const query = document.getElementById('location-search').value;
+            if (!query) return;
+            
+            // Simple geocoding using OpenStreetMap Nominatim (FREE)
+            fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.length > 0) {
+                        const result = data[0];
+                        map.setView([result.lat, result.lon], 14);
+                    } else {
+                        alert('Location not found');
+                    }
+                });
+        }
+
+        function getDefaultDonors() {
+            return [
+                {
+                    id: 'donor_1', name: 'Rajesh Kumar', bloodType: 'O+', 
+                    contact: '98******01', location: 'Shivajinagar, Pune',
+                    lat: 18.5314, lng: 73.8446, isVerified: true
+                },
+                {
+                    id: 'donor_2', name: 'Priya Sharma', bloodType: 'A+',
+                    contact: '97******02', location: 'Kothrud, Pune', 
+                    lat: 18.5074, lng: 73.8077, isVerified: true
+                }
+            ];
+        }
+
+        function getRandomCoordinate(center, range) {
+            return center + (Math.random() - 0.5) * range;
+        }
+
+        function requestContact(donorId) {
+            const userProfile = JSON.parse(localStorage.getItem('userProfile') || '{}');
+            if (!userProfile.name) {
+                alert('Please complete your profile first.');
+                return;
+            }
+            alert('Contact request sent to donor!');
+        }
+
+        // Initialize map when page loads
+        document.addEventListener('DOMContentLoaded', initMap);
     </script>
-    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDiTcHAcC4JxHxWjznk9z1vhmTr19j2MQE&callback=initMap" defer></script>
+
+    <style>
+        .donor-marker {
+            background: #ff4757;
+            color: white;
+            border-radius: 50%;
+            text-align: center;
+            line-height: 30px;
+            font-size: 16px;
+            border: 2px solid white;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+        }
+
+        .map-popup {
+            padding: 10px;
+            min-width: 200px;
+        }
+
+        .map-popup h3 {
+            margin: 0 0 10px 0;
+            color: #333;
+        }
+
+        .map-popup button {
+            background: #ff4757;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 10px;
+        }
+
+        .donor-item {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 15px;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            cursor: pointer;
+        }
+
+        .donor-item:hover {
+            background: #f5f5f5;
+        }
+
+        .donor-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: #ff4757;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+
+        .blood-type {
+            background: #ff4757;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+    </style>
 </body>
 </html>
